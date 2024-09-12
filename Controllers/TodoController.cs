@@ -14,10 +14,32 @@ namespace ASP_Api_Demo.Controllers
             new TodoItem { Id = 2, Name = "Task2", IsComplete = true }
         };
 
+
+        /// <summary>
+        /// Gibt eine Liste von TodoItems zurück. Optional können Name und Erledigungsstatus gefiltert werden.
+        /// </summary>
+        /// <param name="name">Der Name des TodoItems, nach dem gefiltert werden soll(optional)</param>
+        /// <param name="isComplete">Der Status, ob das TodoItem abgeschlossen ist oder nicht (optional)</param>
+        /// <returns>Eine optional gefilterte Liste von TodoItems</returns>
+   
         [HttpGet]
-        public IEnumerable<TodoItem> Get()
+        public IEnumerable<TodoItem> Get([FromQuery] string? name, [FromQuery] bool? isComplete)
         {
-            return _todoItems;
+            var items = _todoItems.AsEnumerable();
+
+            //Nach Name filtern, wenn ein Name übergeben wurde
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                items = items.Where(t => t.Name.Contains(name));
+            }
+
+            //Nach Erledigungsstatus filter, wenn einer übergeben wurde
+            if (isComplete.HasValue)
+            {
+                items = items.Where(t => t.IsComplete == isComplete.Value);
+            }
+
+            return items;
         }
 
         [HttpPost]
@@ -54,9 +76,5 @@ namespace ASP_Api_Demo.Controllers
             _todoItems.Remove(item);
             return NoContent();
         }
-
-
-
-
     }
 }
