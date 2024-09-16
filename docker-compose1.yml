@@ -1,12 +1,13 @@
+version: '3.8'
+
 services:
   asp_api_demo:
     image: asp_api_demo_image
     build:
-      context: ./ASP_Rest_API
+      context: .
       dockerfile: Dockerfile
     ports:
-     - "8080:80"
-     #- "443:443"
+     - "8080:8080"
+     - "443:443"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:80 # Stellt sicher, dass nur HTTP verwendet wird
