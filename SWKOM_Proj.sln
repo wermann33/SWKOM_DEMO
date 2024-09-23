@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ASP_Rest_API", "ASP_Rest_AP
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{F20C035D-4F02-4A6C-8397-EAC3C9C3DAAC}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebUI", "WebUI\WebUI.csproj", "{7A214B19-B956-42C4-AD1C-D8CB5D8394DB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{F20C035D-4F02-4A6C-8397-EAC3C9C3DAAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F20C035D-4F02-4A6C-8397-EAC3C9C3DAAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F20C035D-4F02-4A6C-8397-EAC3C9C3DAAC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A214B19-B956-42C4-AD1C-D8CB5D8394DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A214B19-B956-42C4-AD1C-D8CB5D8394DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A214B19-B956-42C4-AD1C-D8CB5D8394DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A214B19-B956-42C4-AD1C-D8CB5D8394DB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

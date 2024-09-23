@@ -37,19 +37,33 @@ namespace ASP_Api_Demo.Controllers
                 items = items.Where(t => t.IsComplete == isComplete.Value);
             }
 
-
-
-
             return items;
         }
 
         [HttpPost]
         public ActionResult<TodoItem> PostTodoItem(TodoItem item)
         {
-            item.Id = _todoItems.Max(t => t.Id) + 1; // Neue ID generieren
-            _todoItems.Add(item); // Item zur Liste hinzufügen
+            // Überprüfung, ob der Task-Name leer oder null ist
+            if (string.IsNullOrWhiteSpace(item.Name))
+            {
+                return BadRequest(new { message = "Task name cannot be empty." });
+            }
+
+            // Neue ID generieren: Falls die Liste leer ist, starte mit ID 1
+            if (_todoItems.Any())
+            {
+                item.Id = _todoItems.Max(t => t.Id) + 1; // Generiere die nächste ID basierend auf dem Maximalwert
+            } else
+            {
+                item.Id = 1; // Falls die Liste leer ist, starte mit ID 1
+            }
+
+            _todoItems.Add(item);
+
+            // Erfolgreich erstellt zurückgeben
             return CreatedAtAction(nameof(Get), new { id = item.Id }, item);
         }
+
 
         [HttpPut("{id}")]
         public IActionResult PutTodoItem(int id, TodoItem item)
@@ -77,9 +91,5 @@ namespace ASP_Api_Demo.Controllers
             _todoItems.Remove(item);
             return NoContent();
         }
-
-
-
-
     }
 }
