@@ -1,6 +1,6 @@
-﻿namespace WebApplicationTest1
+﻿namespace ASP_Rest_API.DTO
 {
-    public class TodoItem
+    public class TodoItemDto
     {
         public int Id { get; set; }
         public string Name { get; set; }

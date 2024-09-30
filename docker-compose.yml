@@ -10,6 +10,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080 # Stellt sicher, dass nur HTTP verwendet wird
+    depends_on:
+      - tododal
 
   webui:
     image: web_ui_image
@@ -23,3 +25,30 @@ services:
       - ./WebUI/wwwroot:/app/wwwroot  # Statische Dateien mounten
     depends_on:
       - asp_rest_api
+   
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Binde das Volume für persistente Datenspeicherung ein
+
+  tododal:
+    image: tododal_image
+    build:
+      context: ./TodoDAL
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8081
+    depends_on:
+      - db
+ 
+volumes:
+    postgres_data:  # Definiertes Volume für persistente Datenspeicherung von PostgreSQL

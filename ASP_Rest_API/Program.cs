@@ -1,3 +1,5 @@
+using ASP_Rest_API.Controllers;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -25,11 +27,21 @@ builder.Services.AddSwaggerGen(c =>
 
     c.IncludeXmlComments(xmlPath);
 });
+// Registriere HttpClient für den TodoController
+builder.Services.AddHttpClient("TodoDAL", client =>
+{
+    client.BaseAddress = new Uri("http://tododal:8081"); // URL des DAL Services in Docker
+});
 
 var app = builder.Build();
 
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(c =>
+{
+    //swagger unter http://localhost:8080/swagger/index.html fixieren (sichert gegen Konflikte durch nginx oder browser-cache oder Konfigurationsprobleme)
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
+    c.RoutePrefix = "swagger"; 
+});
 
 // Verwende die CORS-Policy
 app.UseCors("AllowWebUI");

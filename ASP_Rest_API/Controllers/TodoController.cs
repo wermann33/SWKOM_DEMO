@@ -1,95 +1,102 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using WebApplicationTest1;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
+using ASP_Rest_API.DTO;
 
-namespace ASP_Api_Demo.Controllers
+namespace ASP_Rest_API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
     public class TodoController : ControllerBase
     {
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        private static List<TodoItem> _todoItems = new List<TodoItem>
+        public TodoController(IHttpClientFactory httpClientFactory)
         {
-            new TodoItem { Id = 1, Name = "Task1", IsComplete = false },
-            new TodoItem { Id = 2, Name = "Task2", IsComplete = true }
-        };
+            _httpClientFactory = httpClientFactory;
+        }
 
-        /// <summary>
-        /// Gibt eine Liste von Todoitems zurück. Optional können Name und/oder Erledigungsstatus gefiltert werden
-        /// </summary>
-        /// <param name="name">Der Name des TodoItems, nach dem gefiltert werden kann (string, optional)</param>
-        /// <param name="isComplete">Der Status, ob das TodoItem abgschlossen ist (bool, optional)</param>
-        /// <returns>IEnumearble<TodoItem></TodoItem></returns>
         [HttpGet]
-        public IEnumerable<TodoItem> Get([FromQuery] string? name, [FromQuery] bool? isComplete)
+        public async Task<IActionResult> Get()
         {
-            var items = _todoItems.AsEnumerable();
+            var client = _httpClientFactory.CreateClient("TodoDAL");
+            var response = await client.GetAsync("/api/todo"); // Endpunkt des DAL
 
-            //Nach Name filterm wenn ein Name übergeben wurde
-            if (!string.IsNullOrWhiteSpace(name))
+            if (response.IsSuccessStatusCode)
             {
-                items = items.Where(t => t.Name.Contains(name));
+                var items = await response.Content.ReadFromJsonAsync<IEnumerable<TodoItemDto>>();
+                return Ok(items);
             }
 
-            //Nach Erledigungsstatus filter, wenn einer übergeben wurde
-            if (isComplete.HasValue)
+            return StatusCode((int)response.StatusCode, "Error retrieving Todo items from DAL");
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var client = _httpClientFactory.CreateClient("TodoDAL");
+            var response = await client.GetAsync($"/api/todo/{id}");
+
+            if (response.IsSuccessStatusCode)
             {
-                items = items.Where(t => t.IsComplete == isComplete.Value);
+                var item = await response.Content.ReadFromJsonAsync<TodoItemDto>();
+                if (item != null)
+                {
+                    return Ok(item);
+                }
+                return NotFound();
             }
 
-            return items;
+            return StatusCode((int)response.StatusCode, "Error retrieving Todo item from DAL");
         }
 
         [HttpPost]
-        public ActionResult<TodoItem> PostTodoItem(TodoItem item)
+        public async Task<IActionResult> Create(TodoItemDto item)
         {
-            // Überprüfung, ob der Task-Name leer oder null ist
-            if (string.IsNullOrWhiteSpace(item.Name))
+            var client = _httpClientFactory.CreateClient("TodoDAL");
+            var response = await client.PostAsJsonAsync("/api/todo", item);
+
+            if (response.IsSuccessStatusCode)
             {
-                return BadRequest(new { message = "Task name cannot be empty." });
+                return CreatedAtAction(nameof(GetById), new { id = item.Id }, item);
             }
 
-            // Neue ID generieren: Falls die Liste leer ist, starte mit ID 1
-            if (_todoItems.Any())
-            {
-                item.Id = _todoItems.Max(t => t.Id) + 1; // Generiere die nächste ID basierend auf dem Maximalwert
-            } else
-            {
-                item.Id = 1; // Falls die Liste leer ist, starte mit ID 1
-            }
-
-            _todoItems.Add(item);
-
-            // Erfolgreich erstellt zurückgeben
-            return CreatedAtAction(nameof(Get), new { id = item.Id }, item);
+            return StatusCode((int)response.StatusCode, "Error creating Todo item in DAL");
         }
 
-
         [HttpPut("{id}")]
-        public IActionResult PutTodoItem(int id, TodoItem item)
+        public async Task<IActionResult> Update(int id, TodoItemDto item)
         {
-            var existingItem = _todoItems.FirstOrDefault(t => t.Id == id);
-            if (existingItem == null)
+            if (id != item.Id)
             {
-                return NotFound();
+                return BadRequest("ID mismatch");
             }
 
-            existingItem.Name = item.Name;
-            existingItem.IsComplete = item.IsComplete;
-            return NoContent();
+            var client = _httpClientFactory.CreateClient("TodoDAL");
+            var response = await client.PutAsJsonAsync($"/api/todo/{id}", item);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return NoContent();
+            }
+
+            return StatusCode((int)response.StatusCode, "Error updating Todo item in DAL");
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteTodoItem(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var item = _todoItems.FirstOrDefault(t => t.Id == id);
-            if (item == null)
+            var client = _httpClientFactory.CreateClient("TodoDAL");
+            var response = await client.DeleteAsync($"/api/todo/{id}");
+
+            if (response.IsSuccessStatusCode)
             {
-                return NotFound();
+                return NoContent();
             }
 
-            _todoItems.Remove(item);
-            return NoContent();
+            return StatusCode((int)response.StatusCode, "Error deleting Todo item from DAL");
         }
     }
 }
