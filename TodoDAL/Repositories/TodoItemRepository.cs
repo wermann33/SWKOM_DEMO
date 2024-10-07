@@ -8,29 +8,29 @@ namespace TodoDAL.Repositories
     {
         public async Task<IEnumerable<TodoItem>> GetAllAsync()
         {
-            return await context.TodoItems.ToListAsync();
+            return await context.TodoItems!.ToListAsync();
         }
 
         public async Task<TodoItem> GetByIdAsync(int id)
         {
-            return await context.TodoItems.FindAsync(id);
+            return (await context.TodoItems!.FindAsync(id))!;
         }
 
         public async Task AddAsync(TodoItem item)
         {
-            await context.TodoItems.AddAsync(item);
+            await context.TodoItems!.AddAsync(item);
             await context.SaveChangesAsync();
         }
 
         public async Task UpdateAsync(TodoItem item)
         {
-            context.TodoItems.Update(item);
+            context.TodoItems!.Update(item);
             await context.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
         {
-            var item = await context.TodoItems.FindAsync(id);
+            var item = await context.TodoItems!.FindAsync(id);
             if (item != null)
             {
                 context.TodoItems.Remove(item);
