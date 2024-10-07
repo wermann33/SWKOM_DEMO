@@ -2,8 +2,8 @@ services:
   asp_rest_api:
     image: asp_rest_api_image
     build:
-      context: ./ASP_Rest_API
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./ASP_Rest_API/Dockerfile
     ports:
      - "8080:8080"
      #- "443:443"
@@ -40,8 +40,8 @@ services:
   tododal:
     image: tododal_image
     build:
-      context: ./TodoDAL
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./TodoDAL/Dockerfile
     ports:
       - "8081:8081"
     environment:

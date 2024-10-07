@@ -8,18 +8,18 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Kopiert nur die .csproj-Datei aus dem entsprechenden Ordner
-COPY ["TodoDAL.csproj", "."]
-RUN dotnet restore "TodoDAL.csproj"
+COPY ["./TodoDAL/TodoDAL.csproj", "./TodoDAL/"]
+RUN dotnet restore "./TodoDAL/TodoDAL.csproj"
 
 # Kopiere alle anderen Dateien
 COPY . .
 
 # Build der Anwendung
-RUN dotnet build "TodoDAL.csproj" -c Release -o /app/build
+RUN dotnet build "./TodoDAL/TodoDAL.csproj" -c Release -o /app/build
 
 # Staging: Publish Stage
 FROM build AS publish
-RUN dotnet publish "TodoDAL.csproj" -c Release -o /app/publish
+RUN dotnet publish "./TodoDAL/TodoDAL.csproj" -c Release -o /app/publish
 
 # Staging: Final Stage
 FROM base AS final

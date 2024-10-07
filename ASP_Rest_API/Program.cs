@@ -1,9 +1,13 @@
 using ASP_Rest_API.Controllers;
+using ASP_Rest_API.Mappings;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+//Mapping
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 // CORS konfigurieren, um Anfragen von localhost:80 (WebUI) zuzulassen
 builder.Services.AddCors(options =>

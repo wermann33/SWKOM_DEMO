@@ -4,6 +4,8 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using ASP_Rest_API.DTO;
+using AutoMapper;
+using TodoDAL.Entities;
 
 namespace ASP_Rest_API.Controllers
 {
@@ -12,10 +14,12 @@ namespace ASP_Rest_API.Controllers
     public class TodoController : ControllerBase
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IMapper _mapper;
 
-        public TodoController(IHttpClientFactory httpClientFactory)
+        public TodoController(IHttpClientFactory httpClientFactory, IMapper mapper)
         {
             _httpClientFactory = httpClientFactory;
+            _mapper = mapper;
         }
 
         [HttpGet]
@@ -26,8 +30,9 @@ namespace ASP_Rest_API.Controllers
 
             if (response.IsSuccessStatusCode)
             {
-                var items = await response.Content.ReadFromJsonAsync<IEnumerable<TodoItemDto>>();
-                return Ok(items);
+                var items = await response.Content.ReadFromJsonAsync<IEnumerable<TodoItem>>();
+                var dtoItems = _mapper.Map<IEnumerable<TodoItemDto>>(items);
+                return Ok(dtoItems);
             }
 
             return StatusCode((int)response.StatusCode, "Error retrieving Todo items from DAL");
@@ -41,10 +46,11 @@ namespace ASP_Rest_API.Controllers
 
             if (response.IsSuccessStatusCode)
             {
-                var item = await response.Content.ReadFromJsonAsync<TodoItemDto>();
+                var item = await response.Content.ReadFromJsonAsync<TodoItem>();
+                var dtoItem = _mapper.Map<TodoItemDto>(item);
                 if (item != null)
                 {
-                    return Ok(item);
+                    return Ok(dtoItem);
                 }
                 return NotFound();
             }
@@ -53,28 +59,30 @@ namespace ASP_Rest_API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(TodoItemDto item)
+        public async Task<IActionResult> Create(TodoItemDto itemDto)
         {
             var client = _httpClientFactory.CreateClient("TodoDAL");
+            var item = _mapper.Map<TodoItem>(itemDto);
             var response = await client.PostAsJsonAsync("/api/todo", item);
 
             if (response.IsSuccessStatusCode)
             {
-                return CreatedAtAction(nameof(GetById), new { id = item.Id }, item);
+                return CreatedAtAction(nameof(GetById), new { id = item.Id }, itemDto);
             }
 
             return StatusCode((int)response.StatusCode, "Error creating Todo item in DAL");
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, TodoItemDto item)
+        public async Task<IActionResult> Update(int id, TodoItemDto itemDto)
         {
-            if (id != item.Id)
+            if (id != itemDto.Id)
             {
                 return BadRequest("ID mismatch");
             }
 
             var client = _httpClientFactory.CreateClient("TodoDAL");
+            var item = _mapper.Map<TodoItem>(itemDto);
             var response = await client.PutAsJsonAsync($"/api/todo/{id}", item);
 
             if (response.IsSuccessStatusCode)
