@@ -1,5 +1,8 @@
 using ASP_Rest_API.Controllers;
+using ASP_Rest_API.DTO;
 using ASP_Rest_API.Mappings;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +11,10 @@ builder.Services.AddControllers();
 
 //Mapping
 builder.Services.AddAutoMapper(typeof(MappingProfile));
+
+//FluentValidation
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<TodoItemDtoValidator>();
 
 // CORS konfigurieren, um Anfragen von localhost:80 (WebUI) zuzulassen
 builder.Services.AddCors(options =>

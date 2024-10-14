@@ -29,11 +29,8 @@ function fetchTodoItems() {
 function addTask() {
     const taskName = document.getElementById('taskName').value;
     const isComplete = document.getElementById('isComplete').checked;
+    const errorDiv = document.getElementById('errorMessages'); //Div für Fehlermeldungen
 
-    if (taskName.trim() === '') {
-        alert('Please enter a task name');
-        return;
-    }
 
     const newTask = {
         name: taskName,
@@ -54,11 +51,12 @@ function addTask() {
                 document.getElementById('isComplete').checked = false; // Reset checkbox
             } else {
                 // Neues Handling für den Fall eines Fehlers (z.B. leeres Namensfeld)
-                response.json().then(err => alert("Fehler: " + err.message));
-                console.error('Fehler beim Hinzufügen der Aufgabe.');
+                response.json().then(err => {
+                    errorDiv.innerHTML = `<ul>` + Object.values(err.errors).map(e => `<li>${e}</li>`).join('') + `</ul>`;
+                });
             }
         })
-        .catch(error => console.error('Fehler:', error));
+        .catch (error => console.error('Fehler:', error));
 }
 
 

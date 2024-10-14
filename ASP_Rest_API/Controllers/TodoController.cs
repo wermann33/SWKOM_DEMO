@@ -61,6 +61,11 @@ namespace ASP_Rest_API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(TodoItemDto itemDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var client = _httpClientFactory.CreateClient("TodoDAL");
             var item = _mapper.Map<TodoItem>(itemDto);
             var response = await client.PostAsJsonAsync("/api/todo", item);
@@ -76,6 +81,11 @@ namespace ASP_Rest_API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, TodoItemDto itemDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             if (id != itemDto.Id)
             {
                 return BadRequest("ID mismatch");
