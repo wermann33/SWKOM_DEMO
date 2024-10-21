@@ -12,6 +12,9 @@ namespace ASP_Rest_API.DTO
 
             RuleFor(x => x.IsComplete)
                 .NotNull().WithMessage("The task completion status must be specified.");
+
+            RuleFor(x => x.FileName)
+                .MaximumLength(255).WithMessage("The task name must not exceed 255 chars.");
         }
     }
 }

@@ -17,6 +17,17 @@ function fetchTodoItems() {
                     <button style="margin-left: 10px;" onclick="toggleComplete(${task.id}, ${task.isComplete}, '${task.name}')">
                         Mark as ${task.isComplete ? 'Incomplete' : 'Complete'}
                     </button>
+                    <br/>
+                    <br/>
+                    <span>File: ${task.fileName || "No file uploaded"}</span>
+                    <input type="file" id="fileInput${task.id}" />
+                    <button style="margin-left: 10px;" onclick="uploadFile(${task.id}, document.getElementById('fileInput${task.id}'))">
+                        Upload File
+                    </button>
+                    <br/>
+                    <br/>
+                    <br/>
+                    <br/>
                 `;
                 todoList.appendChild(li);
             });
@@ -59,6 +70,32 @@ function addTask() {
         .catch (error => console.error('Fehler:', error));
 }
 
+function uploadFile(taskId, fileInput) {
+    const file = fileInput.files[0];
+    if (!file) {
+        alert("Keine Datei ausgewählt.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('taskFile', file);
+
+    fetch(`${apiUrl}/${taskId}/upload`, {
+        method: 'PUT', 
+        body: formData
+    })
+        .then(response => {
+            if (response.ok) {
+                fetchTodoItems(); 
+                alert("Datei erfolgreich hochgeladen.");
+            } else {
+                alert("Fehler beim Hochladen der Datei.");
+            }
+        })
+        .catch(error => {
+            console.error('Fehler:', error);
+        });
+}
 
 // Function to delete a task
 function deleteTask(id) {

@@ -9,18 +9,20 @@ namespace TodoDAL.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Manuelle Konfiguration der Tabelle
             modelBuilder.Entity<TodoItem>(entity =>
             {
-                entity.ToTable("TodoItems");  // Setzt den Tabellennamen
+                entity.ToTable("TodoItems");
 
-                entity.HasKey(e => e.Id);  // Setzt den Primärschlüssel
+                entity.HasKey(e => e.Id);
 
                 entity.Property(e => e.Name)
                     .IsRequired()
-                    .HasMaxLength(100);  // Konfiguriert den "Name"-Spalten
+                    .HasMaxLength(100);
 
-                entity.Property(e => e.IsComplete);  // Konfiguriert die "IsComplete"-Spalte
+                entity.Property(e => e.IsComplete);
+
+                entity.Property(e => e.FileName)  
+                    .HasMaxLength(255);  
             });
 
             base.OnModelCreating(modelBuilder);

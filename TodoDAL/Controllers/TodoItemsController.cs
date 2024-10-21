@@ -38,8 +38,20 @@ namespace TodoDAL.Controllers
 
             existingItem.Name = item.Name;
             existingItem.IsComplete = item.IsComplete;
+            existingItem.FileName = item.FileName;
             await repository.UpdateAsync(existingItem);
             return NoContent();
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetByIdAsync(int id)
+        {
+            var item = await repository.GetByIdAsync(id);
+            if (item == null)
+            {
+                return NotFound();
+            }
+            return Ok(item);
         }
 
         [HttpDelete("{id}")]
