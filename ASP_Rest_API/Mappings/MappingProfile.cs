@@ -17,6 +17,8 @@ namespace ASP_Rest_API.Mappings
                     => opt.MapFrom(src => src.IsComplete))
                 .ForMember(dest => dest.FileName, opt 
                     => opt.MapFrom(src => src.FileName))
+                .ForMember(dest => dest.OcrText, opt 
+                    => opt.MapFrom(src => src.OcrText))
                 .ReverseMap()
                 .ForMember(dest => dest.Id, opt
                     => opt.MapFrom(src => src.Id))
@@ -25,7 +27,9 @@ namespace ASP_Rest_API.Mappings
                 .ForMember(dest => dest.IsComplete, opt
                     => opt.MapFrom(src => src.IsComplete))
                 .ForMember(dest => dest.FileName, opt 
-                    => opt.MapFrom(src => src.FileName));
+                    => opt.MapFrom(src => src.FileName))
+                .ForMember(dest => dest.OcrText, opt 
+                    => opt.MapFrom(src => src.OcrText));
 
 
 

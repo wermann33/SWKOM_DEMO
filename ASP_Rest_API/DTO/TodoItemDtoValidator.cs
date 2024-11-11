@@ -14,7 +14,9 @@ namespace ASP_Rest_API.DTO
                 .NotNull().WithMessage("The task completion status must be specified.");
 
             RuleFor(x => x.FileName)
-                .MaximumLength(255).WithMessage("The task name must not exceed 255 chars.");
+                .Must(fileName => fileName == null || fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                .WithMessage("Only PDF files are allowed.")
+                .MaximumLength(255).WithMessage("The file name must not exceed 255 chars.");
         }
     }
 }

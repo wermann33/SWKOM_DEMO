@@ -39,6 +39,7 @@ namespace TodoDAL.Controllers
             existingItem.Name = item.Name;
             existingItem.IsComplete = item.IsComplete;
             existingItem.FileName = item.FileName;
+            existingItem.OcrText = item.OcrText;
             await repository.UpdateAsync(existingItem);
             return NoContent();
         }

@@ -1,33 +1,28 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using ASP_Rest_API.DTO;
+using ASP_Rest_API.Services;
 using AutoMapper;
 using RabbitMQ.Client;
 using TodoDAL.Entities;
+using RabbitMQ.Client.Events;
+using FluentValidation;
 
 namespace ASP_Rest_API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class TodoController : ControllerBase, IDisposable
+    public class TodoController : ControllerBase
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IMapper _mapper;
-        private readonly IConnection _connection;
-        private readonly IModel _channel;
+        private readonly IMessageQueueService _messageQueueService;
 
-        public TodoController(IHttpClientFactory httpClientFactory, IMapper mapper)
+        public TodoController(IHttpClientFactory httpClientFactory, IMapper mapper, IMessageQueueService messageQueueService)
         {
             _httpClientFactory = httpClientFactory;
             _mapper = mapper;
-
-            // Stelle die Verbindung zu RabbitMQ her
-            var factory = new ConnectionFactory() { HostName = "rabbitmq", UserName = "user", Password = "password" };
-            _connection = factory.CreateConnection();
-            _channel = _connection.CreateModel();
-
-            // Deklariere die Queue
-            _channel.QueueDeclare(queue: "file_queue", durable: false, exclusive: false, autoDelete: false, arguments: null);
+            _messageQueueService = messageQueueService;
         }
 
         [HttpGet]
@@ -61,6 +56,7 @@ namespace ASP_Rest_API.Controllers
                 {
                     return Ok(dtoItem);
                 }
+
                 return NotFound();
             }
 
@@ -90,6 +86,8 @@ namespace ASP_Rest_API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, TodoItemDto itemDto)
         {
+            Console.WriteLine($@"[PUT] Eingehender OcrText: {itemDto.OcrText}");
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -102,6 +100,8 @@ namespace ASP_Rest_API.Controllers
 
             var client = _httpClientFactory.CreateClient("TodoDAL");
             var item = _mapper.Map<TodoItem>(itemDto);
+            Console.WriteLine($@"[PUT] Gemappter OcrText: {item.OcrText}");
+
             var response = await client.PutAsJsonAsync($"/api/todo/{id}", item);
 
             if (response.IsSuccessStatusCode)
@@ -117,7 +117,13 @@ namespace ASP_Rest_API.Controllers
         {
             if (taskFile == null || taskFile.Length == 0)
             {
-                return BadRequest("Keine Datei hochgeladen.");
+                ModelState.AddModelError("taskFile", "Keine Datei hochgeladen.");
+                return BadRequest(ModelState);
+            }
+            if (!taskFile.FileName.EndsWith(".pdf"))
+            {
+                ModelState.AddModelError("taskFile", "Nur PDF-Dateien sind erlaubt.");
+                return BadRequest(ModelState);
             }
 
             // Hole den Task vom DAL
@@ -129,28 +135,47 @@ namespace ASP_Rest_API.Controllers
             }
 
             // Mappe das empfangene TodoItem auf ein TodoItemDto
-            var todoItem = await response.Content.ReadFromJsonAsync<TodoItemDto>();
+            var todoItem = await response.Content.ReadFromJsonAsync<TodoItem>();
             if (todoItem == null)
             {
                 return NotFound($"Task mit ID {id} nicht gefunden.");
             }
 
-            var todoItemDto = _mapper.Map<TodoItem>(todoItem);
-
-            // Setze den Dateinamen im DTO
+            var todoItemDto = _mapper.Map<TodoItemDto>(todoItem); // Mappe TodoItem auf TodoItemDto
             todoItemDto.FileName = taskFile.FileName;
 
-            // Aktualisiere das Item im DAL, nutze das DTO
-            var updateResponse = await client.PutAsJsonAsync($"/api/todo/{id}", todoItemDto);
+            // Validierung mit FluentValidation
+            var validator = new TodoItemDtoValidator();
+            var validationResult = validator.Validate(todoItemDto); // Validiere das DTO
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.Errors);
+            }
+
+            // Mappe wieder zurück zu TodoItem, um es im DAL zu aktualisieren
+            var updatedTodoItem = _mapper.Map<TodoItem>(todoItemDto);
+
+            // Aktualisiere das Item im DAL
+            var updateResponse = await client.PutAsJsonAsync($"/api/todo/{id}", updatedTodoItem);
             if (!updateResponse.IsSuccessStatusCode)
             {
                 return StatusCode((int)updateResponse.StatusCode, $"Fehler beim Speichern des Dateinamens für Task {id}");
             }
 
+            // Datei speichern (lokal im Container)
+            var filePath = Path.Combine("/app/uploads", taskFile.FileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(filePath)!); // Erstelle das Verzeichnis, falls es nicht existiert
+            await using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await taskFile.CopyToAsync(stream);
+            }
+
             // Nachricht an RabbitMQ
             try
             {
-                SendToMessageQueue(taskFile.FileName);
+                _messageQueueService.SendToQueue($"{id}|{filePath}");
+                Console.WriteLine($@"File Path {filePath} an RabbitMQ Queue gesendet.");
             }
             catch (Exception ex)
             {
@@ -159,21 +184,6 @@ namespace ASP_Rest_API.Controllers
 
             return Ok(new { message = $"Dateiname {taskFile.FileName} für Task {id} erfolgreich gespeichert." });
         }
-
-        private void SendToMessageQueue(string fileName)
-        {
-            // Sende die Nachricht in den RabbitMQ channel/queue
-            var body = Encoding.UTF8.GetBytes(fileName);
-            _channel.BasicPublish(exchange: "", routingKey: "file_queue", basicProperties: null, body: body);
-            Console.WriteLine($@"[x] Sent {fileName}");
-        }
-
-        public void Dispose()
-        {
-            _channel?.Close();
-            _connection?.Close();
-        }
-
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)

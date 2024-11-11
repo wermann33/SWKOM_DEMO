@@ -40,7 +40,7 @@ function fetchTodoItems() {
 function addTask() {
     const taskName = document.getElementById('taskName').value;
     const isComplete = document.getElementById('isComplete').checked;
-    const errorDiv = document.getElementById('errorMessages'); //Div für Fehlermeldungen
+    const errorDiv = document.getElementById('errorMessages'); 
 
 
     const newTask = {
@@ -60,8 +60,8 @@ function addTask() {
                 fetchTodoItems(); // Refresh the list after adding
                 document.getElementById('taskName').value = ''; // Clear the input field
                 document.getElementById('isComplete').checked = false; // Reset checkbox
+                errorDiv.innerHTML = ''; 
             } else {
-                // Neues Handling für den Fall eines Fehlers (z.B. leeres Namensfeld)
                 response.json().then(err => {
                     errorDiv.innerHTML = `<ul>` + Object.values(err.errors).map(e => `<li>${e}</li>`).join('') + `</ul>`;
                 });
@@ -72,8 +72,10 @@ function addTask() {
 
 function uploadFile(taskId, fileInput) {
     const file = fileInput.files[0];
+    const errorDiv = document.getElementById('errorMessages'); // Div für Fehlernachrichten
+
     if (!file) {
-        alert("Keine Datei ausgewählt.");
+        errorDiv.innerHTML = `<ul><li>Keine Datei ausgewählt.</li></ul>`;
         return;
     }
 
@@ -81,21 +83,34 @@ function uploadFile(taskId, fileInput) {
     formData.append('taskFile', file);
 
     fetch(`${apiUrl}/${taskId}/upload`, {
-        method: 'PUT', 
+        method: 'PUT',
         body: formData
     })
         .then(response => {
             if (response.ok) {
-                fetchTodoItems(); 
-                alert("Datei erfolgreich hochgeladen.");
+                fetchTodoItems();
+                errorDiv.innerHTML = ''; // Fehlernachrichten bei Erfolg entfernen
             } else {
-                alert("Fehler beim Hochladen der Datei.");
+                // Versuche die Fehlernachricht zu lesen, falls vorhanden
+                response.json().then(err => {
+                    if (err.errors) {
+                        errorDiv.innerHTML = `<ul>` + Object.values(err.errors).map(e => `<li>${e}</li>`).join('') + `</ul>`;
+                    } else {
+                        // Allgemeine Fehlermeldung, falls keine spezifische Nachricht vorhanden ist
+                        errorDiv.innerHTML = `<ul><li>Fehler beim Hochladen der Datei. Nur PDF-Dateien sind erlaubt.</li></ul>`;
+                    }
+                }).catch(() => {
+                    errorDiv.innerHTML = `<ul><li>Fehler beim Hochladen der Datei.</li></ul>`;
+                });
             }
         })
         .catch(error => {
             console.error('Fehler:', error);
+            errorDiv.innerHTML = `<ul><li>Fehler beim Verbinden mit dem Server.</li></ul>`;
         });
 }
+
+
 
 // Function to delete a task
 function deleteTask(id) {

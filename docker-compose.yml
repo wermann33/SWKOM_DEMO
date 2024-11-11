@@ -13,6 +13,8 @@ services:
     depends_on:
       - tododal
       - rabbitmq
+    volumes:
+      - ./uploads:/app/uploads
 
   webui:
     image: web_ui_image
@@ -62,6 +64,18 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=user
       - RABBITMQ_DEFAULT_PASS=password
+
+  ocr_worker:
+    image: ocr_worker_image
+    build:
+      context: ./OcrWorker  
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    volumes:
+      - ./uploads:/app/uploads
 
 volumes:
     postgres_data:  # Definiertes Volume für persistente Datenspeicherung von PostgreSQL

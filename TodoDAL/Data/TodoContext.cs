@@ -22,7 +22,11 @@ namespace TodoDAL.Data
                 entity.Property(e => e.IsComplete);
 
                 entity.Property(e => e.FileName)  
-                    .HasMaxLength(255);  
+                    .HasMaxLength(255);
+
+                entity.Property(e => e.OcrText)
+                    .HasMaxLength(-1);
+
             });
 
             base.OnModelCreating(modelBuilder);

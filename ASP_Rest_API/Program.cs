@@ -1,5 +1,6 @@
 using ASP_Rest_API.DTO;
 using ASP_Rest_API.Mappings;
+using ASP_Rest_API.Services;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 
@@ -42,6 +43,11 @@ builder.Services.AddHttpClient("TodoDAL", client =>
 {
     client.BaseAddress = new Uri("http://tododal:8081"); // URL des DAL Services in Docker
 });
+
+// Füge den RabbitMQ Background Service hinzu
+builder.Services.AddControllers();
+builder.Services.AddSingleton<IMessageQueueService, MessageQueueService>();
+builder.Services.AddHostedService<RabbitMqListenerService>();
 
 var app = builder.Build();
 

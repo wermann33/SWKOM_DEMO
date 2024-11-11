@@ -6,5 +6,6 @@
         public string? Name { get; set; }
         public bool IsComplete { get; set; }
         public string? FileName { get; set; }
+        public string? OcrText { get; set; }
     }
 }
